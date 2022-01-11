@@ -1,0 +1,30 @@
+[2021-12-21 19:30:50,814] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: verificacao_log.verificacao_log scheduled__2021-12-21T09:30:00+00:00 [queued]>
+[2021-12-21 19:30:50,824] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: verificacao_log.verificacao_log scheduled__2021-12-21T09:30:00+00:00 [queued]>
+[2021-12-21 19:30:50,824] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2021-12-21 19:30:50,824] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2021-12-21 19:30:50,824] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2021-12-21 19:30:50,835] {taskinstance.py:1262} INFO - Executing <Task(PythonOperator): verificacao_log> on 2021-12-21 09:30:00+00:00
+[2021-12-21 19:30:50,839] {standard_task_runner.py:52} INFO - Started process 15799 to run task
+[2021-12-21 19:30:50,841] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'verificacao_log', 'verificacao_log', 'scheduled__2021-12-21T09:30:00+00:00', '--job-id', '73', '--raw', '--subdir', 'DAGS_FOLDER/my_dag.py', '--cfg-path', '/tmp/tmp1qr7x5jj', '--error-file', '/tmp/tmpwawt30_1']
+[2021-12-21 19:30:50,841] {standard_task_runner.py:77} INFO - Job 73: Subtask verificacao_log
+[2021-12-21 19:30:50,870] {logging_mixin.py:109} INFO - Running <TaskInstance: verificacao_log.verificacao_log scheduled__2021-12-21T09:30:00+00:00 [running]> on host 371b38751bd1
+[2021-12-21 19:30:50,905] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=verificacao_log
+AIRFLOW_CTX_TASK_ID=verificacao_log
+AIRFLOW_CTX_EXECUTION_DATE=2021-12-21T09:30:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2021-12-21T09:30:00+00:00
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - Data atual:  2021-12-21 19:30:51.406072
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - Dia do ultimo log:  2021/12/14 17:10:14
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - Tempo entre o ultimo log e a data atual:  7 days, 2:20:37.406049
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - INFO   | jvm 4    | 2021/12/14 17:10:14 | [RSFILEMANAGERSERVER] Finalizando importacao lote: DadosSite_03105116_49301_2021121416h55min05seg.zip.rscd. Tempo gasto (ms): 15944
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - 
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - 
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - 
+[2021-12-21 19:30:51,406] {logging_mixin.py:109} INFO - Erro, tempo entre ultimo log e data atual maior que:  0:10:00
+[2021-12-21 19:30:51,406] {python.py:152} INFO - Done. Returned value was: None
+[2021-12-21 19:30:51,417] {taskinstance.py:1280} INFO - Marking task as SUCCESS. dag_id=verificacao_log, task_id=verificacao_log, execution_date=20211221T093000, start_date=20211221T193050, end_date=20211221T193051
+[2021-12-21 19:30:51,454] {local_task_job.py:154} INFO - Task exited with return code 0
+[2021-12-21 19:30:51,479] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check
