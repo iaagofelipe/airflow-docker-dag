@@ -85,12 +85,6 @@ import smtplib, ssl
 
 def send_email_if_inconsistent_time():
   logging.error("tempo entre ultimo log e data atual maior que 10 minutos.")
-  # email = EmailOperator(
-  #       task_id="send_email",
-  #       to=EMAIL_RECEIPIENTS,
-  #       subject="Tempo excedido entre finalização importação de lote",
-  #       html_content="""<h3> tempo entre ultimo log e data atual maior que 10 minutos.</h3>""",
-  #       dag=dag )
   smtp_server = "smtp.office365.com"
   port = 587
   sender_email = "no-reply@mobitbrasil.com.br"
