@@ -17,30 +17,16 @@ import smtplib, ssl
 
 from sqlalchemy.sql.expression import true
 
-
-
-
-start_date_dag = airflow.utils.dates.days_ago(0)
-
-args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': start_date_dag
-}
-
-dag = DAG(
-    default_args=args,
-    dag_id='verificacao_log',
-    tags=['verificação'],
-    start_date=start_date_dag,
-    schedule_interval = timedelta(minutes=10)
-)
+start_date_dag = datetime.now();
 
 MAX_TIMEOUT = timedelta(minutes=10)
 important = []
 keep_phrases = ["Finalizando importacao lote"]
 url =r'http://10.85.20.8/maj/rsfilemanager.log'
+# http://cpisefaz.mobitbrasil.com.br/logs_mobit/rscontrol/rsfilemanager.log
+# http://10.85.20.8/maj/rsfilemanager.log
 
+#TODO armazenar estado de falha e usar essa informação para controlar o envio de email.
 
 def get_variable(var, default=None):
   try:
@@ -81,10 +67,10 @@ def scrap_file(important, keep_phrases, file):
 
 log_text, date_time_str, date_time_difference = scrap_file(important, keep_phrases, file)
 
-import smtplib, ssl
 
 def send_email_if_inconsistent_time():
-  logging.error("tempo entre ultimo log e data atual maior que 10 minutos.")
+  logging.info("tempo entre ultimo log e data atual maior que 10 minutos, alertando via e-mail")
+  
   smtp_server = "smtp.office365.com"
   port = 587
   sender_email = "no-reply@mobitbrasil.com.br"
@@ -92,18 +78,17 @@ def send_email_if_inconsistent_time():
 
   context = ssl.create_default_context()
   message = """\
+  From: no-reply@mobitbrasil.com.br
   Subject: Teste
   ERROR - tempo entre ultimo log e data atual maior que 10 minutos."""
 
   try:
     with smtplib.SMTP(smtp_server, port) as server:
-      server.ehlo()
       server.starttls(context=context)
-      server.ehlo()
       server.login(sender_email, password)
       server.sendmail(sender_email, EMAIL_RECEIPIENTS, message) 
   except Exception as e:
-    print(e)    
+    logging.error("EMAIL NÃO ENVIADO " + str(e))    
   finally:
     server.quit() 
     
@@ -132,6 +117,20 @@ def execute_dag():
   log_text, date_time_str, date_time_difference = scrap_file(important, keep_phrases, file)
   show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference)
 
+
+args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': start_date_dag
+}
+
+dag = DAG(
+    default_args=args,
+    dag_id='verificacao_log',
+    tags=['verificação'],
+    start_date=start_date_dag,
+    schedule_interval = MAX_TIMEOUT
+)
 
 
 task1 = PythonOperator(
