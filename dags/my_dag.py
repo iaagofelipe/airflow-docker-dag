@@ -37,6 +37,9 @@ def get_variable(var, default=None):
 SEND_EMAIL = str(get_variable('SEND EMAIL', 'False')) == 'True'
 EMAIL_RECEIPIENTS = get_variable('EMAIL_RECEIPIENTS', '')
 
+
+STATUS_IMPORTACAO = str(Variable.get("STATUS_IMPORTACAO", 'sucesso')) == 'erro'
+
 def search_file():
     try:
       file = urlopen(url)
@@ -77,23 +80,23 @@ def send_email_if_inconsistent_time():
   password = "@M0b1t@M1t5"
 
   context = ssl.create_default_context()
-  message = """\
+  message = '''\
   From: no-reply@mobitbrasil.com.br
   Subject: Teste
-  ERROR - tempo entre ultimo log e data atual maior que 10 minutos."""
+  ERROR - tempo entre ultimo log e data atual maior que 10 minutos.
+  '''
 
   try:
     with smtplib.SMTP(smtp_server, port) as server:
       server.starttls(context=context)
       server.login(sender_email, password)
-      server.sendmail(sender_email, EMAIL_RECEIPIENTS, message) 
+      logging.debug("FAZENDO LOGIN NO SERVIDOR ")    
+      server.sendmail(sender_email, EMAIL_RECEIPIENTS, (550,message)) 
   except Exception as e:
     logging.error("EMAIL NÃO ENVIADO " + str(e))    
   finally:
+    logging.debug("FINALIZANDO SERVIDOR ")    
     server.quit() 
-    
-  
-
 
 def show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference):
   try:
@@ -109,8 +112,6 @@ def show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference):
     logging.error('Não foi possível validar o tempo de finalização de importação para o lote', err)    
 
 show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference)
-
-
 
 def execute_dag():
   file = search_file()
