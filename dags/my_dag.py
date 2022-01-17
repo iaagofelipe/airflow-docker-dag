@@ -1,7 +1,9 @@
 from email import message
+from multiprocessing.managers import ValueProxy
 from urllib.request import urlopen
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import re
+from xmlrpc.client import DateTime
 from airflow.models.dag import ScheduleInterval
 from jinja2.runtime import Context
 import requests
@@ -10,14 +12,20 @@ import logging
 import airflow
 from airflow import DAG
 from airflow.models import Variable, taskinstance
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.email_operator import EmailOperator
-
+from airflow.operators.python import PythonOperator
+from airflow.operators.email import EmailOperator
 import smtplib, ssl
 
 from sqlalchemy.sql.expression import true
 
-start_date_dag = datetime.now();
+start_date_dag = airflow.utils.dates.days_ago(1)
+# start_date_dag = datetime.now();
+
+args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': start_date_dag
+}
 
 MAX_TIMEOUT = timedelta(minutes=10)
 important = []
@@ -28,17 +36,8 @@ url =r'http://10.85.20.8/maj/rsfilemanager.log'
 
 #TODO armazenar estado de falha e usar essa informação para controlar o envio de email.
 
-def get_variable(var, default=None):
-  try:
-    return Variable.get(var, default)
-  except:
-    return default
-
-SEND_EMAIL = str(get_variable('SEND EMAIL', 'False')) == 'True'
-EMAIL_RECEIPIENTS = get_variable('EMAIL_RECEIPIENTS', '')
-
-
-STATUS_IMPORTACAO = str(Variable.get("STATUS_IMPORTACAO", 'sucesso')) == 'erro'
+SEND_EMAIL = str(Variable.get('SEND_EMAIL', 'False')) == 'True'
+EMAIL_RECEIPIENTS = Variable.get('EMAIL_RECEIPIENTS', '')
 
 def search_file():
     try:
@@ -70,7 +69,6 @@ def scrap_file(important, keep_phrases, file):
 
 log_text, date_time_str, date_time_difference = scrap_file(important, keep_phrases, file)
 
-
 def send_email_if_inconsistent_time():
   logging.info("tempo entre ultimo log e data atual maior que 10 minutos, alertando via e-mail")
   
@@ -78,24 +76,19 @@ def send_email_if_inconsistent_time():
   port = 587
   sender_email = "no-reply@mobitbrasil.com.br"
   password = "@M0b1t@M1t5"
-
   context = ssl.create_default_context()
-  message = '''\
-  From: no-reply@mobitbrasil.com.br
-  Subject: Teste
-  ERROR - tempo entre ultimo log e data atual maior que 10 minutos.
-  '''
+  message = '''
+    Subject: Erro finalizando importacao
+      ERROR - tempo entre ultimo log e data atual maior que 10 minutos.'''
 
-  try:
-    with smtplib.SMTP(smtp_server, port) as server:
-      server.starttls(context=context)
-      server.login(sender_email, password)
-      logging.debug("FAZENDO LOGIN NO SERVIDOR ")    
-      server.sendmail(sender_email, EMAIL_RECEIPIENTS, (550,message)) 
-  except Exception as e:
-    logging.error("EMAIL NÃO ENVIADO " + str(e))    
-  finally:
-    logging.debug("FINALIZANDO SERVIDOR ")    
+  with smtplib.SMTP(smtp_server, port) as server:
+    logging.info("FAZENDO LOGIN NO SERVIDOR")    
+    server.starttls(context=context)
+    server.login(sender_email, password)
+    server.sendmail(
+      sender_email,
+      "iagosilva@mobitbrasil.com.br",
+      message) 
     server.quit() 
 
 def show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference):
@@ -107,7 +100,9 @@ def show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference):
     inconsistent_time = date_time_difference >= MAX_TIMEOUT 
     if (inconsistent_time):
       send_email_if_inconsistent_time()
-    
+      status_importacao = Variable.set_val("status_importacao", "Erro")
+    else:
+      status_importacao = Variable.get("status_importacao")
   except RuntimeError as err:
     logging.error('Não foi possível validar o tempo de finalização de importação para o lote', err)    
 
@@ -118,29 +113,22 @@ def execute_dag():
   log_text, date_time_str, date_time_difference = scrap_file(important, keep_phrases, file)
   show_results(MAX_TIMEOUT, log_text, date_time_str, date_time_difference)
 
-
-args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': start_date_dag
-}
-
-dag = DAG(
+with DAG(
     default_args=args,
     dag_id='verificacao_log',
     tags=['verificação'],
+    catchup=False,
     start_date=start_date_dag,
-    schedule_interval = MAX_TIMEOUT
-)
-
-
-task1 = PythonOperator(
-      task_id='execute_dag',
-      python_callable=execute_dag,
-      email_on_failure=SEND_EMAIL,
-      email=[EMAIL_RECEIPIENTS],
-      retries=0,
-      dag=dag
-  )
+    schedule_interval = timedelta(minutes=10)
+) as dag:
+  task1 = PythonOperator(
+    
+        task_id='execute_dag',
+        python_callable=execute_dag,
+        email_on_failure=SEND_EMAIL,
+        email=[EMAIL_RECEIPIENTS],
+        retries=0,
+        dag=dag
+    )
 
 task1 
